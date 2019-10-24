@@ -44,14 +44,14 @@ public:
 
 	void send( view buf, int flags = 0 ) const {
 		int r = nng_send(s,buf.data(),buf.size(),flags & ~flag::alloc);
-		if( r != 0 ) {
+		if( r != 0 && r != NNG_EAGAIN) {
 			throw exception(r,"nng_send");
 		}
 	}
 
 	void send( buffer&& buf, int flags = 0 ) const {
 		int r = nng_send(s,buf.data(),buf.size(),flags | flag::alloc);
-		if( r != 0 ) {
+		if( r != 0 && r != NNG_EAGAIN) {
 			throw exception(r,"nng_send");
 		}
 		// if successful, the buffer has been freed
@@ -97,6 +97,9 @@ public:
 		void* data;
 		size_t size;
 		int r = nng_recv(s,&data,&size,flags | flag::alloc);
+		if (r == NNG_EAGAIN) {
+			return buffer();
+		}
 		if( r != 0 ) {
 			throw exception(r,"nng_recv");
 		}
